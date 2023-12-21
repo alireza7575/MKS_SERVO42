@@ -1,7 +1,7 @@
 {
     "name": "MKS_SERVO42",
     "description": "This library is used to control one or more stepper motors from an Arduino device.",
-    "keywords": "mks, servo, mksservo57,esp,stepper,stepper-motor,motor,control,motor-control,speed,position, nema23",
+    "keywords": "mks, servo, mksservo42,esp,stepper,stepper-motor,motor,control,motor-control,speed,position, nema17",
     "authors": {
         "name": "Alireza Ahmadi",
         "maintainer": true
