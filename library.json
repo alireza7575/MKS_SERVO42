@@ -1,7 +1,7 @@
 {
     "name": "MKS_SERVO42",
-    "description": "Control one or more MKS SERVO42 stepper motor drivers from an Arduino-compatible board.",
-    "keywords": "mks, servo, mksservo42,arduino,hardware-serial,stepper,stepper-motor,motor,control,motor-control,speed,position,nema17",
+    "description": "Control MKS SERVO42 and MKS SERVOxxD stepper drivers from an Arduino-compatible board.",
+    "keywords": "mks, servo, mksservo42,mks-servo42d,mks-servo57d,rs485,arduino,hardware-serial,stepper,stepper-motor,motor,control,motor-control,speed,position,nema17",
     "authors": {
         "name": "Alireza Ahmadi",
         "maintainer": true

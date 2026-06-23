@@ -11,6 +11,7 @@ a motor by direction, speed, and pulse count.
 - Address one or more drivers by stepper ID
 - Read the current encoder position
 - Move a motor by direction, speed, and number of pulses
+- Initial RS485 serial support for MKS SERVO42D/57D drivers
 
 ## Supported Boards
 
@@ -83,6 +84,45 @@ stepper.ping(yAxisId);
 stepper.setTargetPosition(xAxisId, 0, 16, 5000);
 stepper.setTargetPosition(yAxisId, 1, 16, 5000);
 ```
+
+## MKS SERVOxxD RS485
+
+The library also includes initial support for MKS SERVO42D/57D drivers over the
+D-series RS485 serial protocol. This protocol uses a different frame format from
+the original MKS SERVO42 UART protocol, so it is exposed through the separate
+`MKS_SERVO_D` class.
+
+Supported D-series commands:
+
+- Read real-time position
+- Read real-time speed
+- Run speed mode
+- Run position mode 1 by pulse count
+
+```cpp
+#include <MKS_SERVO_D.h>
+
+MKS_SERVO_D servo;
+
+void setup() {
+  Serial.begin(115200);
+  Serial1.begin(38400);
+  servo.initialize(&Serial1);
+}
+
+void loop() {
+  int32_t position = 0;
+  if (servo.readPosition(1, position)) {
+    Serial.println(position);
+  }
+
+  servo.runPositionMode1(1, 0, 100, 200, 32000);
+  delay(3000);
+}
+```
+
+Use an RS485 transceiver between the Arduino UART and the RS485 bus. CAN and
+Modbus RTU support are not implemented yet.
 
 ## Contributing
 
