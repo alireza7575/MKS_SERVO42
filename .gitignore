@@ -1,0 +1,24 @@
+# Arduino build output
+build/
+.pio/
+.pioenvs/
+.piolibdeps/
+
+# Compiled objects and binaries
+*.a
+*.bin
+*.d
+*.elf
+*.hex
+*.o
+*.so
+
+# Local editor and OS files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
