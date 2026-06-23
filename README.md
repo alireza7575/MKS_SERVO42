@@ -12,10 +12,14 @@ a motor by direction, speed, and pulse count.
 - Read the current encoder position
 - Move a motor by direction, speed, and number of pulses
 
-## Supported Architectures
+## Supported Boards
 
-- ESP32
-- Espressif32
+This library uses the Arduino `HardwareSerial` API, so it is intended to work
+with Arduino-compatible boards that provide a hardware serial port, including
+ESP32-based boards and boards such as the Arduino Giga.
+
+The library has mainly been used with ESP32 so far. Other boards should work,
+but may need board-specific serial port selection and wiring.
 
 ## Installation
 
@@ -87,4 +91,3 @@ Pull requests and issues are welcome.
 ## Author
 
 Alireza Ahmadi
-
