@@ -1,15 +1,13 @@
 #include "MKS_SERVO42.h"
 
 byte const stepperId = 1;
-uint8_t const speed = 1600;
+uint8_t const speed = 16;
 uint32_t const numberOfPulses = 5000;
 
 MKS_SERVO42 stepper;
 
 void setup() {
   Serial.begin(115200);
-  while (!Serial.available())
-    delay(0);
   Serial1.begin(38400);
   stepper.initialize(&Serial1);
   stepper.ping(stepperId);

@@ -1,13 +1,16 @@
-```markdown
 # MKS_SERVO42 Library
 
-The MKS_SERVO42 library is designed to control one or more Nema17 stepper motors using the MKSSERVO42 driver from an Arduino device. It provides an easy-to-use interface for controlling the motion of the stepper motor, including setting the speed, directionection, and number of steps.
+The MKS_SERVO42 library controls one or more Nema17 stepper motors using an
+MKS SERVO42 driver from an Arduino-compatible board. It provides a small serial
+API for checking motor status, reading the current encoder position, and moving
+a motor by direction, speed, and pulse count.
 
 ## Features
 
-- Control Nema17 stepper motors with MKSSERVO42 driver
-- Set motor speed and directionection
-- Control the number of steps to move
+- Control Nema17 stepper motors with MKS SERVO42 drivers
+- Address one or more drivers by stepper ID
+- Read the current encoder position
+- Move a motor by direction, speed, and number of pulses
 
 ## Supported Architectures
 
@@ -16,31 +19,30 @@ The MKS_SERVO42 library is designed to control one or more Nema17 stepper motors
 
 ## Installation
 
-To install this library, download the repository and place it in your Arduino `libraries` folder, or use the Arduino Library Manager to search for `MKS_SERVO42` and install it directionectly.
+Download this repository and place it in your Arduino `libraries` folder, or use
+the Arduino Library Manager to search for `MKS_SERVO42` and install it directly.
 
 ## Usage
 
-To use the library, include it at the top of your Arduino sketch:
+Include the library at the top of your Arduino sketch:
 
+```cpp
 #include <MKS_SERVO42.h>
 ```
 
-Refer to the example provided in the `examples/` directionectory to get started:
+Refer to the example in `examples/Example1_BasicStepper` to get started.
 
 ```cpp
-// Example usage of MKS_SERVO42 library
 #include "MKS_SERVO42.h"
 
 byte const stepperId = 1;
-uint8_t const speed = 1600;
+uint8_t const speed = 16;
 uint32_t const numberOfPulses = 5000;
 
 MKS_SERVO42 stepper;
 
 void setup() {
   Serial.begin(115200);
-  while (!Serial.available())
-    delay(0);
   Serial1.begin(38400);
   stepper.initialize(&Serial1);
   stepper.ping(stepperId);
@@ -56,18 +58,33 @@ void loop() {
 }
 ```
 
-## Example
-A basic example is provided in the `examples/Example1_BasicStepper` directionectory. This example demonstrates the basic functionality of the library, such as setting up the motor, defining the speed and directionection, and moving a specified number of steps.
+## Multiple Controllers
+
+Yes, one UART or RS232 serial port can control multiple MKS SERVO42C controllers
+when each controller is configured with a unique stepper ID. Pass the target ID
+as the `stepperId` argument when calling methods such as `ping()`,
+`getCurrentPosition()`, or `setTargetPosition()`.
+
+Use the correct electrical interface for your hardware. TTL UART and RS232 are
+not the same signal levels, so use an appropriate transceiver or adapter when
+connecting an Arduino UART to an RS232 bus.
+
+```cpp
+byte const xAxisId = 1;
+byte const yAxisId = 2;
+
+stepper.ping(xAxisId);
+stepper.ping(yAxisId);
+
+stepper.setTargetPosition(xAxisId, 0, 16, 5000);
+stepper.setTargetPosition(yAxisId, 1, 16, 5000);
+```
 
 ## Contributing
-If you would like to contribute to the library, please feel free to make a pull request or open an issue on the repository.
+
+Pull requests and issues are welcome.
 
 ## Author
+
 Alireza Ahmadi
-
-## Contact
-For any questions or issues, please open an issue on the GitHub repository.
-
-## Acknowledgments
-Special thanks to all the contributors and users of the MKS_SERVO42 library.
 

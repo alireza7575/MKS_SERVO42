@@ -1,23 +1,29 @@
 #include "MKS_SERVO42.h"
+#include <limits.h>
 
 void MKS_SERVO42::initialize(HardwareSerial *serialPort, long const &baudRate)
 {
 	port_ = serialPort;
+	if (port_ == nullptr)
+	{
+		Serial.println("Serial port is not initialized");
+		return;
+	}
 	port_->begin(baudRate);
 }
 
 bool MKS_SERVO42::ping(byte const &stepperId)
 {
-	// Flush
-	while (port_->read() != -1)
-		;
+	if (!isInitialized())
+		return false;
+	flushInput();
 	int send = sendMessage(stepperId, instruction::STEPPER_PING);
 	if (send != 3)
 	{
 		Serial.println("Failed to send");
 		return false;
 	}
-	return reciveStepperStatus();
+	return receiveStepperStatus(stepperId);
 }
 
 int MKS_SERVO42::sendMessage(byte stepperId, byte const &commandId)
@@ -37,30 +43,55 @@ int MKS_SERVO42::sendMessage(byte stepperId, byte const &commandId)
 	return port_->write(message, 3);
 }
 
-int MKS_SERVO42::reciveStepperStatus()
+bool MKS_SERVO42::isInitialized()
 {
-	int messageSize = 2 + sizeof(uint8_t);
+	if (port_ != nullptr)
+		return true;
+
+	Serial.println("Serial port is not initialized");
+	return false;
+}
+
+void MKS_SERVO42::flushInput()
+{
+	while (port_->read() != -1)
+		;
+}
+
+bool MKS_SERVO42::receiveStepperStatus(byte const &stepperId)
+{
+	const size_t messageSize = 3;
 	byte receivedBytes[messageSize];
 	size_t rd = port_->readBytes(receivedBytes, messageSize);
+	if (rd != messageSize)
+	{
+		Serial.println("Invalid response from motor controller");
+		return false;
+	}
 	for (size_t i = 0; i < 2 + sizeof(uint8_t); i++)
 	{
 		Serial.print(" ");
 		Serial.print(receivedBytes[i], HEX);
 	}
 	Serial.println();
+	if (receivedBytes[0] != stepperId + 0xE0 || receivedBytes[2] != calculateChecksum(receivedBytes, 2))
+	{
+		Serial.println("Invalid response from motor controller");
+		return false;
+	}
 	return receivedBytes[1] == 1;
 }
 
 long MKS_SERVO42::getCurrentPosition(byte const &stepperId)
 {
-	// Flush
-	while (port_->read() != -1)
-		;
+	if (!isInitialized())
+		return LONG_MIN;
+	flushInput();
 	int send = sendMessage(stepperId, instruction::GET_ENCODER_POS);
 	if (send != 3)
 	{
 		Serial.println("Failed to send");
-		return -1;
+		return LONG_MIN;
 	}
 	return recieveEncoderPosition(stepperId);
 }
@@ -69,7 +100,7 @@ long MKS_SERVO42::recieveEncoderPosition(byte const &stepperId)
 {
 	byte receivedBytes[8] = {0xe0, 0x00, 0x00, 0x00, 0x00, 0x40, 0x20};
 	size_t bytesRead = port_->readBytes(receivedBytes, 8);
-	if (bytesRead == 8 && receivedBytes[0] == (stepperId + 0xE0))
+	if (bytesRead == 8 && receivedBytes[0] == (stepperId + 0xE0) && receivedBytes[7] == calculateChecksum(receivedBytes, 7))
 	{
 		int32_t carry = (int32_t)receivedBytes[1] << 24 | (int32_t)receivedBytes[2] << 16 | (int32_t)receivedBytes[3] << 8 | (int32_t)receivedBytes[4];
 		uint16_t value = (uint16_t)receivedBytes[5] << 8 | (uint16_t)receivedBytes[6];
@@ -78,34 +109,38 @@ long MKS_SERVO42::recieveEncoderPosition(byte const &stepperId)
 	else
 	{
 		Serial.println("Invalid response from motor controller");
-		return false;
+		return LONG_MIN;
 	}
 }
 
 bool MKS_SERVO42::setTargetPosition(byte stepperId, byte direction, uint8_t speed, uint32_t pulses)
 {
-	if (speed > 2000 || direction > 1)
+	if (!isInitialized())
+		return false;
+	if (speed > 127 || direction > 1)
 	{
-		Serial.println("Speed out of range or invalid directionection");
+		Serial.println("Speed out of range or invalid direction");
 		return false;
 	}
+	flushInput();
 	stepperId += 0xE0;
 	byte message[8];
 	message[0] = stepperId;							// Slave address
 	message[1] = instruction::MOVE_SPEED_PULSES;	// Function code for running the motor
-	message[2] = (direction << 7) | (speed & 0x7F); // VAL byte, with directionection and speed
+	message[2] = (direction << 7) | speed;			// VAL byte, with direction and speed
 	message[3] = (pulses >> 24) & 0xFF;
 	message[4] = (pulses >> 16) & 0xFF;
 	message[5] = (pulses >> 8) & 0xFF;
 	message[6] = pulses & 0xFF;
 	message[7] = calculateChecksum(message, 7);
-	port_->write(message, sizeof(message));
-
-	while (port_->read() != -1)
-		;
+	if (port_->write(message, sizeof(message)) != sizeof(message))
+	{
+		Serial.println("Failed to send");
+		return false;
+	}
 	byte response[3];
 	size_t bytesRead = port_->readBytes(response, 3);
-	if (bytesRead == 3 && response[0] == stepperId)
+	if (bytesRead == 3 && response[0] == stepperId && response[2] == calculateChecksum(response, 2))
 	{
 		if (response[1] == 0)
 		{
@@ -122,6 +157,8 @@ bool MKS_SERVO42::setTargetPosition(byte stepperId, byte direction, uint8_t spee
 			Serial.println("Run command completed");
 			return true;
 		}
+		Serial.println("Unknown response from motor controller");
+		return false;
 	}
 	else
 	{

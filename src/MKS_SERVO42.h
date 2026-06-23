@@ -35,23 +35,25 @@ public:
 
 	/// @brief Retrieves the current position of the stepper motor in pulses.
 	/// @param stepperId The ID of the stepper motor whose position is to be retrieved.
-	/// @return Returns the current position of the stepper motor as a long integer value.
+	/// @return Returns the current position of the stepper motor, or LONG_MIN if the read fails.
 	long getCurrentPosition(byte const &stepperId);
 
 	/// @brief Sets the target position for the stepper motor by specifying the direction, speed, and number of pulses.
-	///        The speed parameter should not exceed 2000 RPM and the direction should be 0 for one way or 1 for the opposite.
+	///        The speed parameter is the protocol speed value from 0 to 127, and direction should be 0 or 1.
 	/// @param stepperId The ID of the stepper motor to which the command will be sent.
 	/// @param direction The direction in which the motor should run (0 or 1).
-	/// @param speed The speed at which the motor should run, up to a maximum of 2000 RPM.
+	/// @param speed The protocol speed value at which the motor should run, from 0 to 127.
 	/// @param pulses The number of pulses to move, which translates to the target position.
 	/// @return Returns true if the command is successfully sent and the motor starts running, false if there is an error.
 	bool setTargetPosition(byte stepperId, byte direction, uint8_t speed, uint32_t pulses);
 
 private:
-	HardwareSerial *port_;
+	HardwareSerial *port_ = nullptr;
 
 	int sendMessage(byte stepperId, byte const &commandID);
-	int reciveStepperStatus();
+	bool isInitialized();
+	void flushInput();
+	bool receiveStepperStatus(byte const &stepperId);
 	long recieveEncoderPosition(byte const &stepperId);
 	byte calculateChecksum(const byte *message, int length);
 };
